@@ -8,8 +8,12 @@ from django.views.decorators.http import require_http_methods
 from rest_framework import viewsets
 
 from LittleLemonAPI.models import MenuItem
-from .models import AVAILABLE_SLOTS, Booking
-from .serializers import BookingSerializer
+from .models import AVAILABLE_SLOTS, Booking, Menu
+from .serializers import BookingSerializer, MenuSerializer
+
+
+def index(request):
+    return render(request, 'index.html')
 
 
 def booking_form(request):
@@ -24,6 +28,11 @@ def menu_page(request):
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
+
+
+class MenuViewSet(viewsets.ModelViewSet):
+    queryset = Menu.objects.all().order_by('id')
+    serializer_class = MenuSerializer
 
 
 @require_http_methods(['GET', 'POST'])

@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from djoser.views import UserViewSet
+from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.routers import DefaultRouter
 
 from LittleLemonAPI.views import CategoryViewSet, MenuItemViewSet, CartViewSet, OrderViewSet
@@ -29,13 +30,16 @@ router.register('menu-items', MenuItemViewSet, basename='menu-item')
 router.register('cart', CartViewSet, basename='cart')
 router.register('orders', OrderViewSet, basename='order')
 router.register('bookings', restaurant_views.BookingViewSet, basename='booking')
+router.register('menu', restaurant_views.MenuViewSet, basename='restaurant-menu')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', restaurant_views.booking_form, name='booking-form'),
+    path('', restaurant_views.index, name='index'),
+    path('booking/', restaurant_views.booking_form, name='booking-form'),
     path('menu/', restaurant_views.menu_page, name='menu-page'),
     path('bookings', restaurant_views.bookings, name='bookings'),
     path('api/', include(router.urls)),
+    path('api-token-auth/', obtain_auth_token, name='api-token-auth'),
     path('api/registration/', UserViewSet.as_view({'post': 'create'}), name='api-registration'),
     path('api/', include('djoser.urls.authtoken')),
     path('api/groups/manager/users', ManagerUsersView.as_view()),
