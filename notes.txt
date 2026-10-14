@@ -1,0 +1,21 @@
+Little Lemon test credentials
+
+Superuser/Admin
+username: admin
+password: AdminPass123!
+
+Manager
+username: manager
+password: ManagerPass123!
+
+Delivery Crew
+username: delivery
+password: DeliveryPass123!
+
+Customer
+username: customer
+password: CustomerPass123!
+
+API base URL: /api/
+Djoser auth URL: /auth/
+Token login: POST /auth/token/login/

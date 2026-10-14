@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Little Lemon | Menu</title>
+</head>
+
+<body>
+    <main>
+        <h1>Little Lemon Menu</h1>
+        {% if menu_items %}
+        <ul>
+            {% for item in menu_items %}
+            <li>{{ item.title }} - {{ item.price }} ({{ item.category.title }})</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No menu items have been added yet.</p>
+        {% endif %}
+    </main>
+</body>
+
+</html>

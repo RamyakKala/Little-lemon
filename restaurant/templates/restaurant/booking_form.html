@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Little Lemon | Book a table</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: Georgia, 'Times New Roman', serif;
+            background: #f6f4ec;
+            color: #26352d;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        main {
+            width: min(100%, 520px);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            color: #254b3a;
+            font-size: 2.4rem;
+        }
+
+        p {
+            margin: 0 0 28px;
+            color: #53645a;
+        }
+
+        form {
+            display: grid;
+            gap: 18px;
+        }
+
+        label {
+            display: grid;
+            gap: 7px;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        input,
+        select,
+        button {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 48px;
+            padding: 10px 12px;
+            border: 1px solid #9aa89e;
+            border-radius: 4px;
+            background: #fff;
+            color: #26352d;
+            font: 1rem Arial, sans-serif;
+        }
+
+        select option:disabled {
+            color: #858585;
+            background: #e6e6e6;
+        }
+
+        button {
+            margin-top: 4px;
+            border-color: #254b3a;
+            background: #254b3a;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: .65;
+            cursor: wait;
+        }
+
+        #booking-status {
+            min-height: 1.5em;
+            margin-top: 16px;
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            main {
+                animation: arrive .35s ease-out both;
+            }
+
+            @keyframes arrive {
+                from {
+                    opacity: 0;
+                    transform: translateY(8px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <h1>Little Lemon</h1>
+        <p>Reserve a table</p>
+        <form id="booking-form" action="/bookings" method="post">
+            {% csrf_token %}
+            <label for="first_name">First name
+                <input id="first_name" name="first_name" type="text" maxlength="100" autocomplete="given-name" required>
+            </label>
+            <label for="reservation_date">Reservation date
+                <input id="reservation_date" name="reservation_date" type="date" required>
+            </label>
+            <label for="reservation_slot">Reservation slot
+                <select id="reservation_slot" name="reservation_slot" required>
+                    <option value="" selected disabled>Select a time</option>
+                    {% for value, label in available_slots %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button type="submit">Book table</button>
+        </form>
+        <p id="booking-status" role="status" aria-live="polite"></p>
+    </main>
+    <script>
+        const form = document.querySelector('#booking-form');
+        const dateInput = document.querySelector('#reservation_date');
+        const slotSelect = document.querySelector('#reservation_slot');
+        const statusMessage = document.querySelector('#booking-status');
+        const submitButton = form.querySelector('button[type="submit"]');
+        const csrfToken = form.querySelector('[name="csrfmiddlewaretoken"]').value;
+
+        async function refreshBookedSlots() {
+            const response = await fetch(`/bookings?date=${encodeURIComponent(dateInput.value)}`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Could not load reservations.');
+            const bookings = Array.isArray(data) ? data : [];
+            const bookedSlots = new Set(bookings.map((booking) => booking.reservation_slot));
+            for (const option of slotSelect.options) {
+                if (option.value) option.disabled = bookedSlots.has(option.value);
+            }
+            if (bookedSlots.has(slotSelect.value)) slotSelect.value = '';
+            statusMessage.textContent = bookings.length ? '' : 'No Booking';
+        }
+
+        dateInput.value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        refreshBookedSlots().catch((error) => { statusMessage.textContent = error.message; });
+        dateInput.addEventListener('change', () => {
+            refreshBookedSlots().catch((error) => { statusMessage.textContent = error.message; });
+        });
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            submitButton.disabled = true;
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    body: new FormData(form),
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Could not create reservation.');
+                form.elements.first_name.value = '';
+                statusMessage.textContent = 'Reservation confirmed.';
+                await refreshBookedSlots();
+            } catch (error) {
+                statusMessage.textContent = error.message;
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>
